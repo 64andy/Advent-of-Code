@@ -1,6 +1,8 @@
 """
 Day <x.y> - <title>
 
+Python 3.9+
+
 Input:
 ...
 
@@ -12,7 +14,9 @@ Output:
 """
 
 from pathlib import Path
-p = Path(__file__).with_name("input")
+
+
+p = Path(__file__).with_name("test_input")
 
 # Vars
 ...
