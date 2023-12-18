@@ -21,9 +21,14 @@ p = Path(__file__).with_name("test_input")
 # Vars
 ...
 
+# Classes
+...
+
 # Funcs
 ...
 
+
+# =====
 
 def main():
     with p.open('r') as file:
