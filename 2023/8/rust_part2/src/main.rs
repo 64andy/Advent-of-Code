@@ -29,7 +29,7 @@ struct ParsedFile {
     instructions: String,
     nodes: HashMap<u16, (u16, u16)>,
     starting_nodes: Vec<u16>,
-    terminal_nodes: HashSet<u16> 
+    terminal_nodes: HashSet<u16>,
 }
 
 impl ParsedFile {
@@ -49,38 +49,43 @@ impl ParsedFile {
         }
 
         // Map the string names to integers, for speed
-        let nodes_to_num: HashMap<_, _> = nodes_str.iter()
-                .map(|tuple| &tuple.0)
-                .enumerate()
-                .map(|pair| (pair.1, pair.0 as u16))
-                .collect();
+        let nodes_to_num: HashMap<_, _> = nodes_str
+            .iter()
+            .map(|tuple| &tuple.0)
+            .enumerate()
+            .map(|pair| (pair.1, pair.0 as u16))
+            .collect();
 
-        let nodes: HashMap<_, _> = nodes_str.iter()
-                .map(|tuple| {
-                    (nodes_to_num[&tuple.0], (nodes_to_num[&tuple.1.0], nodes_to_num[&tuple.1.1]))
-                })
-                .collect();
+        let nodes: HashMap<_, _> = nodes_str
+            .iter()
+            .map(|tuple| {
+                (
+                    nodes_to_num[&tuple.0],
+                    (nodes_to_num[&tuple.1 .0], nodes_to_num[&tuple.1 .1]),
+                )
+            })
+            .collect();
 
-        let starting_nodes: Vec<u16> = nodes_to_num.iter()
-                .filter(|(node, _num)| node.ends_with("A"))
-                .map(|(_node, num)| *num)
-                .collect();
-        
-        let terminal_nodes: HashSet<u16> = nodes_to_num.iter()
-                .filter(|(node, _num)| node.ends_with("Z"))
-                .map(|(_node, num)| *num)
-                .collect();
-        
+        let starting_nodes: Vec<u16> = nodes_to_num
+            .iter()
+            .filter(|(node, _num)| node.ends_with("A"))
+            .map(|(_node, num)| *num)
+            .collect();
+
+        let terminal_nodes: HashSet<u16> = nodes_to_num
+            .iter()
+            .filter(|(node, _num)| node.ends_with("Z"))
+            .map(|(_node, num)| *num)
+            .collect();
+
         Ok(ParsedFile {
             instructions,
             nodes,
             starting_nodes,
-            terminal_nodes
+            terminal_nodes,
         })
     }
 }
-
-
 
 fn main() {
     // Firstly, parse file
@@ -103,14 +108,13 @@ fn main() {
         if n_steps_taken % 1_000_000 == 0 {
             println!("{} million", n_steps_taken / 1_000_000);
         }
-        working_nodes = working_nodes.iter()
-            .map(|node|
-                match direction {
-                    'L' => graph[node].0,
-                    'R' => graph[node].1,
-                    _ => panic!("Unknown direction: {:?}", direction),
-            })
-            .collect();
+        working_nodes.iter_mut().for_each(|node| {
+            *node = match direction {
+                'L' => graph[node].0,
+                'R' => graph[node].1,
+                _ => panic!("Unknown direction: {:?}", direction),
+            }
+        })
     }
     println!("Total number of loops: {}", n_steps_taken);
 }
