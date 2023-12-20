@@ -13,6 +13,7 @@ Output:
 ...
 """
 
+import dataclasses
 from pathlib import Path
 
 
@@ -22,7 +23,9 @@ p = Path(__file__).with_name("test_input")
 ...
 
 # Classes
-...
+@dataclasses.dataclass
+class ParsedFile:
+    pass
 
 # Funcs
 ...
