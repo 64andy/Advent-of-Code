@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
@@ -27,7 +27,9 @@ use lazy_regex::regex_captures;
 #[derive(Debug)]
 struct ParsedFile {
     instructions: String,
-    nodes: HashMap<String, (String, String)>,
+    nodes: HashMap<u16, (u16, u16)>,
+    starting_nodes: Vec<u16>,
+    terminal_nodes: HashSet<u16> 
 }
 
 impl ParsedFile {
@@ -35,7 +37,7 @@ impl ParsedFile {
         let mut file_lines = BufReader::new(file).lines();
         // First line is the instructions
         let instructions = String::from(file_lines.next().unwrap()?.trim());
-        let mut nodes: HashMap<String, (String, String)> = HashMap::new();
+        let mut nodes_str: Vec<(String, (String, String))> = vec![];
         // Then a blank line
         file_lines.next();
 
@@ -43,23 +45,42 @@ impl ParsedFile {
             let true_line = line?;
             let (_whole, parent, left_child, right_child) =
                 regex_captures!(r"(...) = \((...), (...)\)", &*true_line).unwrap();
-            nodes.insert(parent.into(), (left_child.into(), right_child.into()));
+            nodes_str.push((parent.into(), (left_child.into(), right_child.into())));
         }
 
+        // Map the string names to integers, for speed
+        let nodes_to_num: HashMap<_, _> = nodes_str.iter()
+                .map(|tuple| &tuple.0)
+                .enumerate()
+                .map(|pair| (pair.1, pair.0 as u16))
+                .collect();
+
+        let nodes: HashMap<_, _> = nodes_str.iter()
+                .map(|tuple| {
+                    (nodes_to_num[&tuple.0], (nodes_to_num[&tuple.1.0], nodes_to_num[&tuple.1.1]))
+                })
+                .collect();
+
+        let starting_nodes: Vec<u16> = nodes_to_num.iter()
+                .filter(|(node, _num)| node.ends_with("A"))
+                .map(|(_node, num)| *num)
+                .collect();
+        
+        let terminal_nodes: HashSet<u16> = nodes_to_num.iter()
+                .filter(|(node, _num)| node.ends_with("Z"))
+                .map(|(_node, num)| *num)
+                .collect();
+        
         Ok(ParsedFile {
             instructions,
             nodes,
+            starting_nodes,
+            terminal_nodes
         })
     }
 }
 
-fn is_start(node: &String) -> bool {
-    node.ends_with("A")
-}
 
-fn is_goal(node: &String) -> bool {
-    node.ends_with("Z")
-}
 
 fn main() {
     // Firstly, parse file
@@ -70,27 +91,23 @@ fn main() {
     let mut n_steps_taken: u64 = 0;
     let graph = parsed_file.nodes;
 
-    let mut working_nodes = vec![];
-    for node in graph.keys() {
-        if is_start(&node) {
-            working_nodes.push(node);
-        }
-    }
+    let mut working_nodes = parsed_file.starting_nodes;
+    let terminal_nodes = parsed_file.terminal_nodes;
 
     for direction in parsed_file.instructions.chars().cycle() {
-        if working_nodes.iter().all(|node| is_goal(*node)) {
+        if working_nodes.iter().all(|num| terminal_nodes.contains(num)) {
             break;
         }
         n_steps_taken += 1;
 
-        if n_steps_taken % 100_000 == 0 {
-            println!("{}", n_steps_taken);
+        if n_steps_taken % 1_000_000 == 0 {
+            println!("{} million", n_steps_taken / 1_000_000);
         }
         working_nodes = working_nodes.iter()
             .map(|node|
                 match direction {
-                    'L' => &graph[*node].0,
-                    'R' => &graph[*node].1,
+                    'L' => graph[node].0,
+                    'R' => graph[node].1,
                     _ => panic!("Unknown direction: {:?}", direction),
             })
             .collect();
