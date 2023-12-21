@@ -24,6 +24,7 @@ Output:
 """
 
 import dataclasses
+import math
 from pathlib import Path
 import re
 from typing import TextIO
@@ -67,31 +68,61 @@ class ParsedFile:
 def is_start(node: str) -> bool:
     return node.endswith('A')
 
-def is_goal(nodes: list[str]) -> bool:
-    return all(node.endswith('Z') for node in nodes)
+def is_goal(node: str) -> bool:
+    return node.endswith('Z')
 
 
 # =====
+
+def testing_the_data(parsed_file):
+    """
+    Testing the data to see if there's any patterns we can exploit
+    """
+    print("===")
+    graph = parsed_file.nodes
+    nodes = list(filter(is_start, graph.keys()))    # We start at every node ending in 'A'
+    print("Starting nodes:", nodes)
+    for i, node in enumerate(nodes):
+        n_steps_taken = 0
+        n_times_hit = 0
+        for direction in cycle(parsed_file.instructions):
+            if n_times_hit >= 5:
+                print("---")
+                break
+            if is_goal(node): # Stop once we've run out of nodes
+                print(f"node[{i}] hit {node!r} on turning {direction!r} after {n_steps_taken} steps")
+                n_times_hit += 1
+            n_steps_taken += 1
+            node = graph[node][DIRECTION[direction]]
+    print()
+    print("As we can see, each starting node will only hit a single terminal node.")
+    print("It hits the same ones every time, so we can just need to calculate when they overlap...")
+    print("We can do this with the lowest common multiple")
+    print("===")
 
 def main():
     with p.open('r') as file:
         parsed_file = ParsedFile.parse(file)
     
-    graph = parsed_file.nodes
-    n_steps_taken = 0
-    current_nodes = list(filter(is_start, graph.keys()))    # We start at every node ending in 'A'
-    for direction in cycle(parsed_file.instructions):
-        if is_goal(nodes=current_nodes): # Stop once we've run out of nodes
-            break
-        n_steps_taken += 1
-        if n_steps_taken%100_000 == 0:
-            print(n_steps_taken)
-        new_nodes = []
-        for node in current_nodes:
-            new_nodes.append(graph[node][DIRECTION[direction]])
-        current_nodes = new_nodes
+    testing_the_data(parsed_file)
     
-    print("Number of steps to reach 'ZZZ':", n_steps_taken)
+    graph = parsed_file.nodes
+    nodes = list(filter(is_start, graph.keys()))    # We start at every node ending in 'A'
+    print("Starting nodes:", nodes)
+    n_steps_per_node = []
+    for i, node in enumerate(nodes):
+        n_steps_taken = 0
+        for direction in cycle(parsed_file.instructions):
+            if is_goal(node): # Stop once we've run out of nodes
+                print(f"n_steps_per_node[{i}] = {n_steps_taken}")
+                n_steps_per_node.append(n_steps_taken)
+                break
+            else:
+                n_steps_taken += 1
+                node = graph[node][DIRECTION[direction]]
+    
+    print(f"They all terminate after (lcm({n_steps_per_node}) = {math.lcm(*n_steps_per_node)}) runs")
+        
 
 
 
