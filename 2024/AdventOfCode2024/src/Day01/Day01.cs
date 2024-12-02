@@ -24,7 +24,8 @@ namespace AdventOfCode2024.src.Day01
             List<int> leftList = [];
             List<int> rightList = [];
 
-            foreach (string line in input) {
+            foreach (string line in input)
+            {
                 string[] nums = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 leftList.Add(int.Parse(nums[0]));
                 rightList.Add(int.Parse(nums[1]));
@@ -39,9 +40,37 @@ namespace AdventOfCode2024.src.Day01
             return totalDistance.ToString();
         }
 
+        /// <summary>
+        /// We must count how often each number in the left list shows up
+        /// in the right list, then multiply by said number. This is called
+        /// the "similarity score".
+        /// e.g. If '3' shows up 5 times in the right list, 3x5=15
+        /// </summary>
+        /// <returns>The sum of the "similarity score"</returns>
         public string Part2(string[] input)
         {
-            return "INCOMPLETE";
+            // Step 1: Build both lists
+            List<int> leftList = [];
+            List<int> rightList = [];
+
+            foreach (string line in input)
+            {
+                string[] nums = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                leftList.Add(int.Parse(nums[0]));
+                rightList.Add(int.Parse(nums[1]));
+            }
+
+            // Step 2: Count how often each left-list number is in the right-list
+            int total = 0;
+            var rightListCounts = rightList
+                                    .GroupBy(i => i)
+                                    .ToDictionary(p => p.Key, p => p.Count());
+            foreach (int leftNum in leftList)
+            {
+                total += leftNum * rightListCounts.GetValueOrDefault(leftNum, 0);
+            }
+
+            return total.ToString();
         }
     }
 }
