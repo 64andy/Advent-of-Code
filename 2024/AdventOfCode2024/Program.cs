@@ -51,14 +51,52 @@ public class AdventOfCode
             {
                 int day = int.Parse(sDay);
                 output = solutions[day];
-            } catch (FormatException) {
+            }
+            catch (FormatException)
+            {
                 Console.WriteLine(string.Format("\"{0}\" is not a number", sDay));
-            } catch (KeyNotFoundException) {
+            }
+            catch (KeyNotFoundException)
+            {
                 Console.WriteLine(string.Format("Day #{0} does not have a solution", sDay));
             }
         } while (output == null);
 
         return output;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="solution"></param>
+    /// <returns></returns>
+    /// <exception cref="FileNotFoundException">When the "input" and "test_input" files aren't in the solution's folder</exception>
+    private static IEnumerable<string> GetSolutionInput(ISolution solution)
+    {
+        string directory = String.Format("./src/{0}/", solution.GetType().Name);
+        string testPath = directory + "test_input";
+        string inputPath = directory + "input";
+        bool testExists = Path.Exists(testPath);
+        bool inputExists = Path.Exists(inputPath);
+
+        if (!testExists && !inputExists)
+        {
+            throw new FileNotFoundException(string.Format("Files \"input\" and \"test_input\" don't exist inside directory {0}", directory));
+        }
+        else if (testExists && !inputExists)
+        {
+            return File.ReadLines(testPath);
+        }
+        else if (!testExists && inputExists)
+        {
+            return File.ReadLines(inputPath);
+        }
+        else
+        {
+            // Idea: If both exist, maybe ask which one to use
+            return File.ReadLines(inputPath);
+        }
+
     }
 
     public static void Main(string[] args)
@@ -71,7 +109,8 @@ public class AdventOfCode
             return;
         }
 
-        Console.WriteLine("Output for Part 1: " + solution.Part1(["UNKNOWN"]));
-        Console.WriteLine("Output for Part 2: " + solution.Part2(["UNKNOWN"]));
+        string[] solutionInput = GetSolutionInput(solution).ToArray();
+        Console.WriteLine("Output for Part 1: " + solution.Part1(solutionInput));
+        Console.WriteLine("Output for Part 2: " + solution.Part2(solutionInput));
     }
 }
