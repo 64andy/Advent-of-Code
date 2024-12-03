@@ -1,6 +1,30 @@
-### Advent of Code - 2019-2023 Solutions (Incomplete)
+### Advent of Code - 2019-2024 Solutions (Incomplete)
 ---
 
-This repository, written in Python, give my solutions to AoC's challenges.
+This repository, written in Python (2019-2023) and C# (2024), contains my solutions to AoC's challenges.
 
-**Please Note**: This is __not__ a full answer list of every year, because me coming across something too difficult would usually stop my run.
+
+#### How to run:
+- Python:
+  - Simply execute the desired Python file
+- C#:
+  - `cd` to the relevant year folder (i.e. `/2024/`), execute `dotnet run`, then enter the day number you want to run
+
+
+#### Structure:
+- Each year has its own folder, and each day has a subfolder
+- Python: `{year}/{day}`
+  - Each 'day' folder contains:
+    - `1_answer.py` - The Part 1 solution
+    - `2_answer.py` - The Part 2 solution
+    - `test_input` - A sample input given in the question's examples 
+    - `input` - The problem's actual input
+  - To create a solution, create a new folder with this structure, and use [`template.py`](./template.py) as your answer's template
+- C#: `{year}/src/{day}`
+  - Each 'day' folder contains:
+    - `Day{day}.cs` - The Part 1 & 2 solution
+    - `test_input` - A sample input given in the question's examples 
+    - `input` - The problem's actual input
+  - To create a solution, create a new folder with this structure, and ensure your solution implements [`ISolution`](./2024/src/ISolution.cs)
+
+**Please Note**: This is __not__ a full answer list of every year, I usually stop before reaching the end.
