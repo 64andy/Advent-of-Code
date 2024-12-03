@@ -73,7 +73,7 @@ public class AdventOfCode
     /// <exception cref="FileNotFoundException">When the "input" and "test_input" files aren't in the solution's folder</exception>
     private static IEnumerable<string> GetSolutionInput(ISolution solution)
     {
-        string directory = String.Format("./src/{0}/", solution.GetType().Name);
+        string directory = $"./src/{solution.GetDay()}/";
         string testPath = directory + "test_input";
         string inputPath = directory + "input";
         bool testExists = Path.Exists(testPath);
