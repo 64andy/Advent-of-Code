@@ -46,7 +46,7 @@ class Day05 : ISolution
     private static List<List<int>> ParseUpdates(string[] input)
         => input.SkipWhile(line => line.Length > 0)     // Go to the "blank line" separator
                 .Skip(1)                                // Ignore the blank line
-                // Convert each line into list of nums
+                                                        // Convert each line into list of nums
                 .Select(line => line.Split(','))
                 .Select(line => line.Select(int.Parse))
                 .Select(line => line.ToList())
@@ -101,8 +101,57 @@ class Day05 : ISolution
                 .ToString();
     }
 
+    private static void Swap(List<int> a, int from, int to)
+        => (a[from], a[to]) = (a[to], a[from]);
+
+    /// <summary>
+    /// Creates a new list, reordered such that the update follows the rules
+    /// </summary>
+    private static List<int> FixUpdate(List<int> update, Dictionary<int, ISet<int>> rules)
+    {
+        /* Logic:
+            We run the same steps as detecting invalid lists, but this time,
+            if we find an out-of-place number we move it back until it's in place.
+            Our `i` index moves forward once we're in place, and back when breaking a rule.
+        */
+        List<int> fixedList = new(update);
+        HashSet<int> seen = [];
+        int i = 0;
+        while (i < fixedList.Count)
+        {
+            if (rules.TryGetValue(fixedList[i], out var after))
+            {
+                // Rewind until all conflicts are resolved
+                while (after.Intersect(seen).Any())
+                {
+                    // Move the previous element forwards, and "forget" it from `seen`
+                    Swap(fixedList, i, i - 1);
+                    seen.Remove(fixedList[i]);
+                    i--;
+                }
+            }
+            seen.Add(fixedList[i]);
+            i++;
+        }
+
+        return fixedList;
+    }
+
+    /// <summary>
+    /// Now, for each incorrectly ordered update, you must "fix" them.
+    /// The method of "fixing" involves moving out-of-place numbers back until they're in
+    /// the right spot.
+    /// </summary>
+    /// <returns>The sum of each middle number of the "fixed" updates</returns>
     public string Part2(string[] input)
     {
-        return "INCOMPLETE";
+        var mapping = ParseOrderingRules(input);
+        
+        return ParseUpdates(input)
+                .Where(line => !IsValidUpdate(line, mapping))
+                .Select(line => FixUpdate(line, mapping))
+                .Select(line => line[line.Count / 2])
+                .Sum()
+                .ToString();
     }
 }
