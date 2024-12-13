@@ -25,13 +25,10 @@ class Day07 : ISolution
         {
             // Base cases
             // If we've reached the target, it's solved
-            if (current == target)
-                return true;
+            if (!nums.Any())
+                return current == target;
             // If we've overshot the number, we're in a doomed timeline
             if (current > target)
-                return false;
-            // If we've exhausted the numbers, we couldn't solve
-            if (!nums.Any())
                 return false;
             // Consume the next number
             var next = nums.First();
@@ -39,7 +36,7 @@ class Day07 : ISolution
 
             return operations.Any(f => SolveRecursive(f(current, next), nums));
         }
-        return SolveRecursive(0, nums);
+        return SolveRecursive(nums.First(), nums.Skip(1));
     }
 
     /// <summary>
