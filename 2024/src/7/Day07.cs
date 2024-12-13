@@ -13,33 +13,34 @@ class Day07 : ISolution
     => input.Select(line => line.Split(':'))
             .Select(line => (
                         long.Parse(line[0]),
-                        line[1].Split(' ',StringSplitOptions.RemoveEmptyEntries)
+                        line[1].Split(' ', StringSplitOptions.RemoveEmptyEntries)
                             .Select(long.Parse)
                             .ToList()
             ));
 
-    private static bool SolveRecursive(long target, long current, IEnumerable<long> nums)
+
+    public static bool IsSolvable(long target, IEnumerable<long> nums, Func<long, long, long>[] operations)
     {
-        // Base cases
-        // If we've reached the target, it's solved
-        if (current == target)
-            return true;
-        // If we've overshot the number, we're in a doomed timeline
-        if (current > target)
-            return false;
-        // If we've exhausted the numbers, we couldn't solve
-        if (!nums.Any())
-            return false;
-        // Consume the next number
-        var next = nums.First();
-        nums = nums.Skip(1);
+        bool SolveRecursive(long current, IEnumerable<long> nums)
+        {
+            // Base cases
+            // If we've reached the target, it's solved
+            if (current == target)
+                return true;
+            // If we've overshot the number, we're in a doomed timeline
+            if (current > target)
+                return false;
+            // If we've exhausted the numbers, we couldn't solve
+            if (!nums.Any())
+                return false;
+            // Consume the next number
+            var next = nums.First();
+            nums = nums.Skip(1);
 
-        return SolveRecursive(target, current+next, nums)
-            || SolveRecursive(target, current*next, nums);
+            return operations.Any(f => SolveRecursive(f(current, next), nums));
+        }
+        return SolveRecursive(0, nums);
     }
-
-    public static bool IsSolvable(long target, IEnumerable<long> nums)
-        => SolveRecursive(target, 0, nums);
 
     /// <summary>
     /// Each row represents an equation, where the LHS is the result,
@@ -51,8 +52,13 @@ class Day07 : ISolution
     /// <returns>The sum of every solvable equation's LHS</returns>
     public string Part1(string[] input)
     {
+        Func<long, long, long>[] operations = [
+            (a, b) => a+b,  // Add
+            (a, b) => a*b   // Multiply
+        ];
         return ParseInput(input)
-                .Where(p => IsSolvable(p.Item1, p.Item2))
+                .AsParallel()
+                .Where(p => IsSolvable(p.Item1, p.Item2, operations))
                 .Select(p => p.Item1)
                 .Sum()
                 .ToString();
@@ -60,6 +66,16 @@ class Day07 : ISolution
 
     public string Part2(string[] input)
     {
-        return "UNIMPLEMENTED";
+        Func<long, long, long>[] operations = [
+            (a, b) => a+b,  // Add
+            (a, b) => a*b,  // Multiply
+            (a, b) => long.Parse(a.ToString() + b.ToString())   // Concat
+        ];
+        return ParseInput(input)
+                .AsParallel()
+                .Where(p => IsSolvable(p.Item1, p.Item2, operations))
+                .Select(p => p.Item1)
+                .Sum()
+                .ToString();
     }
 }
