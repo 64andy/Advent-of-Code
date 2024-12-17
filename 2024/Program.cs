@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
 using AdventOfCode2024.src;
 
 namespace AdventOfCode2024;
@@ -99,6 +100,19 @@ public class AdventOfCode
 
     }
 
+    private enum Part {Part1, Part2};
+    private static string RunPart(string[] input, ISolution solution, Part part)
+    {
+        try {
+            return part switch {
+                Part.Part1 => solution.Part1(input),
+                Part.Part2 => solution.Part2(input),
+                _ => throw new UnreachableException("There's only two parts")
+            };
+        } catch (NotImplementedException) {
+            return "UNIMPLEMENTED";
+        }
+    }
     public static void Main(string[] args)
     {
         var allSolutions = GetAllSolutions();
@@ -110,7 +124,7 @@ public class AdventOfCode
         }
 
         string[] solutionInput = GetSolutionInput(solution).ToArray();
-        Console.WriteLine("Output for Part 1: " + solution.Part1(solutionInput));
-        Console.WriteLine("Output for Part 2: " + solution.Part2(solutionInput));
+        Console.WriteLine("Output for Part 1: " + RunPart(solutionInput, solution, Part.Part1));
+        Console.WriteLine("Output for Part 1: " + RunPart(solutionInput, solution, Part.Part2));
     }
 }
