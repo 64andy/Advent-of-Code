@@ -17,22 +17,22 @@ class Day09 : ISolution
     private static List<int> DecompressString(string denseLayout)
     {
         List<int> layout = [];
-        
-        for (int i=0; i<denseLayout.Length; i += 2)
+
+        for (int i = 0; i < denseLayout.Length; i += 2)
         {
-            layout.AddRange(Enumerable.Repeat(i/2, int.Parse(denseLayout[i].ToString())));
-            if (i+1 < denseLayout.Length)
-                layout.AddRange(Enumerable.Repeat(-1, int.Parse(denseLayout[i+1].ToString())));
+            layout.AddRange(Enumerable.Repeat(i / 2, int.Parse(denseLayout[i].ToString())));
+            if (i + 1 < denseLayout.Length)
+                layout.AddRange(Enumerable.Repeat(-1, int.Parse(denseLayout[i + 1].ToString())));
         }
 
         return layout;
     }
 
-    private static void Swap(List<int> list, int idx1, int idx2)
+    private static void Swap<T>(List<T> list, int idx1, int idx2)
     {
         (list[idx2], list[idx1]) = (list[idx1], list[idx2]);
     }
-    
+
     private static int JumpForwardsUntilBlank(List<int> list, int idx)
     {
         while (idx < list.Count && list[idx] != -1)
@@ -52,7 +52,7 @@ class Day09 : ISolution
     /// </summary>
     /// <param name="origLayout">The compressed data (the input data)</param>
     /// <returns>The defragmented data (contains no blank spaces)</returns>
-    private static List<int> DefragString(string origLayout)
+    private static List<int> DefragString_IndividualNums(string origLayout)
     {
         var layout = DecompressString(origLayout);
 
@@ -87,14 +87,110 @@ class Day09 : ISolution
     /// <returns>The checksum of the condensed string</returns>
     public string Part1(string[] input)
     {
-        return DefragString(input[0])
+        return DefragString_IndividualNums(input[0])
                 .Select((val, idx) => (long)(idx * val))
                 .Sum()
                 .ToString();
     }
 
+    /// <summary>
+    /// Swaps multiple consecutive elements within a given list
+    /// </summary>
+    /// <param name="list">The list to have its elements swapped</param>
+    /// <param name="from">Index of one side to be swapped</param>
+    /// <param name="to">Index of the other side to be swapped</param>
+    /// <param name="size">The number of elements to swap</param>
+    /// <exception cref="IndexOutOfRangeException">Thrown if this operation would cause an out-of-bounds write</exception>
+    private static void SwapRange<T>(List<T> list, int from, int to, int size)
+    {
+        if (from + size > list.Count)
+            throw new IndexOutOfRangeException($"idx1: {from}+{size} would exceed list's size ({list.Count})");
+        if (to + size > list.Count)
+            throw new IndexOutOfRangeException($"idx2: {to}+{size} would exceed list's size ({list.Count})");
+        for (int i = 0; i < size; i++)
+            Swap(list, from + i, to + i);
+    }
+
+    /// <summary>
+    /// Gets the position & length of the next run of empty spaces from the given index
+    /// </summary>
+    /// <returns>A 2-tuple pair of (index, length), or null if none exists</returns>
+    private static (int, int)? FindProceedingBlankSpace(List<int> list, int idx)
+    {
+        idx = JumpForwardsUntilBlank(list, idx);
+        if (idx >= list.Count) return null;
+        var size = 0;
+        while (idx+size < list.Count && list[idx+size] == -1)
+            size++;
+        return (idx, size);
+    }
+
+    /// <summary>
+    /// Gets the position & length of the next preceeding block from the given position
+    /// </summary>
+    /// <returns>A 2-tuple pair of (index, length), or null if none exists</returns>
+    private static (int, int)? FindPreceedingBlock(List<int> list, int idx)
+    {
+        idx = JumpBackwardsWhileNotBlank(list, idx);
+        if (idx == -1) return null;
+        var fileType = list[idx];
+        var size = 1;
+        while (idx > 0 && list[idx-1] == fileType) {
+            idx--;
+            size++;
+        }
+        return (idx, size);
+    }
+
+    /// <summary>
+    /// Condenses the data by fitting each right-most block into the left-most empty
+    ///   space that can fit it, or not moving if none exist.
+    /// </summary>
+    /// <param name="origLayout">The compressed data (the input data)</param>
+    /// <returns>The defragmented data (will likely still contain blank spaces)</returns>
+    private static List<int> DefragString_WholeBlocks(string origLayout)
+    {
+        var layout = DecompressString(origLayout);
+        HashSet<int> seen = [];
+        // 1. Get the next (preceeding) block of numbers
+        int blockPos = layout.Count;
+        int blockSize;
+        (int, int)? endBlock;
+        while ((endBlock = FindPreceedingBlock(layout, blockPos-1)) != null)
+        {
+            (blockPos, blockSize) = endBlock.Value;
+            if (seen.Contains(layout[blockPos])) continue;  // Ignore if seen
+
+            // 2. Find the next block of blank spaces that can fit it
+            int emptyPos = 0;
+            int emptySize = 0;
+            (int, int)? emptyBlock;
+            while ((emptyBlock = FindProceedingBlankSpace(layout, emptyPos + emptySize)) != null)
+            {
+                (emptyPos, emptySize) = emptyBlock.Value;
+                if (emptyPos >= blockPos) break;
+                if (emptySize >= blockSize) {
+                    SwapRange(layout, from:blockPos, to:emptyPos, size:blockSize);
+                    break;
+                }
+            }
+        }
+
+        return layout;
+    }
+
+    /// <summary>
+    /// Now, we condense by moving entire blocks instead of one number at a time.
+    /// Each right-most block should be moved into the left-most blank space that can
+    ///   fit it, if one exists, otherwise don't move it.
+    /// </summary>
+    /// <returns>The checksum of the condensed string</returns>
     public string Part2(string[] input)
     {
-        throw new NotImplementedException();
+        return DefragString_WholeBlocks(input[0])
+                .Select(val => (val == -1) ? 0 : val)
+                .Select((val, idx) => (long)(idx * val))
+                .Sum()
+                .ToString();
     }
 }
