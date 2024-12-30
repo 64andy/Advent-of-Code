@@ -7,38 +7,67 @@ class Day11 : ISolution
 {
     public int GetDay() => 11;
 
-    private static IEnumerable<string> ApplyRules(string num)
+    private static IEnumerable<KeyValuePair<string, long>> ApplyRules(KeyValuePair<string, long> pair)
     {
-        if (num == "0")
+        var (key, count) = pair;
+        if (key == "0")
         {
-            return ["1"];
+            return [new("1", count)];
         }
-        else if (num.Length % 2 == 0)
+        else if (key.Length % 2 == 0)
         {
-            long firstHalf = long.Parse(num[..(num.Length / 2)]);
-            long secondHalf = long.Parse(num.Substring(num.Length/2, num.Length/2));
-            return [firstHalf.ToString(), secondHalf.ToString()];
+            long firstHalf = long.Parse(key[..(key.Length / 2)]);
+            long secondHalf = long.Parse(key.Substring(key.Length/2, key.Length/2));
+            return [new(firstHalf.ToString(), count), new(secondHalf.ToString(), count)];
         }
         else
         {
-            return [(long.Parse(num)*2024).ToString()];
+            return [new((long.Parse(key)*2024).ToString(), count)];
         }
+    }
+
+    private static Dictionary<string, long> CrushIntoDict(IEnumerable<KeyValuePair<string, long>> pairs)
+    {
+        Dictionary<string, long> output = [];
+        foreach (var kv in pairs)
+        {
+            if (output.TryGetValue(kv.Key, out var count))
+            {
+                output[kv.Key] = count + kv.Value;
+            }
+            else
+            {
+                output[kv.Key] = kv.Value;
+            }
+        }
+
+        return output;
+    }
+
+    private static long CalculateNumStones(string input, int numBlinks)
+    {
+        Dictionary<string, long> occurrences = [];
+        foreach (string val in input.Split())
+        {
+            long count = occurrences.GetValueOrDefault(val, 0);
+            occurrences[val] = count+1;
+        }
+
+        for (int i=0; i<numBlinks; i++)
+        {
+            occurrences = CrushIntoDict(occurrences.SelectMany(ApplyRules));
+        }
+
+        return occurrences.Select(kv => kv.Value).Sum();
     }
 
     public string Part1(string[] input)
     {
-        IEnumerable<string> stones = input[0].Split().AsParallel();
-        for (int i=0; i<25; i++)
-        {
-            stones = stones.SelectMany(ApplyRules);
-            // Console.WriteLine($"#{i}: {string.Join(' ', stones)}");
-        }
-
-        return stones.Count().ToString();
+        return CalculateNumStones(input[0], 25).ToString();
     }
 
     public string Part2(string[] input)
     {
-        throw new NotImplementedException();
+        return CalculateNumStones(input[0], 75).ToString();
     }
 }
