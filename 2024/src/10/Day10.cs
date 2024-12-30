@@ -34,12 +34,12 @@ class Day10 : ISolution
         var (ci, cj) = currPos;
         char currVal = input[ci][cj];
         // Look one space up, down, left, right
-        (int, int)[] directions = [(ci-1, cj), (ci+1, cj), (ci, cj-1), (ci, cj+1)];
+        (int, int)[] directions = [(ci - 1, cj), (ci + 1, cj), (ci, cj - 1), (ci, cj + 1)];
         foreach (var (i, j) in directions)
             // In-bounds?
             if (i >= 0 && i < input.Length && j >= 0 && j < input[i].Length)
                 // Ascending?
-                if (input[i][j] == currVal+1)
+                if (input[i][j] == currVal + 1)
                     yield return (i, j);
     }
 
@@ -52,13 +52,19 @@ class Day10 : ISolution
         return input[i][j] == '9';
     }
 
+    private enum WeAreCounting : byte { Paths, Goals };
+
     /// <summary>
     /// A standard path-searching algorithm.
     /// Returns the number of 9s we can reach from the given pos
     /// </summary>
     /// <param name="input">Puzzle input</param>
     /// <param name="start">Starting point</param>
-    private static int FindNumPaths(string[] input, (int, int) start)
+    /// <param name="logic">
+    ///     Determines if we're counting the number of goals reached (Part 1)
+    ///     or the number of paths to get there (Part 2)
+    /// </param>
+    private static int FindNumPaths(string[] input, (int, int) start, WeAreCounting logic)
     {
         int numGoalsFound = 0;
 
@@ -67,17 +73,17 @@ class Day10 : ISolution
         while (frontier.Count > 0)
         {
             var pos = frontier.Dequeue();
-            if (visited.Contains(pos))
+            if (visited.Contains(pos) && logic == WeAreCounting.Goals)
                 continue;
-            else if (IsGoal(input, pos))
+            if (IsGoal(input, pos))
                 numGoalsFound++;
             else
                 foreach (var next in FindNextStepsAscending(input, pos))
                     frontier.Enqueue(next);
-            
+
             visited.Add(pos);
         }
-        
+
         return numGoalsFound;
     }
 
@@ -91,13 +97,24 @@ class Day10 : ISolution
     public string Part1(string[] input)
     {
         return FindCoordsOfEveryOccurance(input, '0')
-                .Select(s => FindNumPaths(input, s))
+                .Select(s => FindNumPaths(input, s, WeAreCounting.Goals))
                 .Sum()
                 .ToString();
     }
 
+    /// <summary>
+    /// Now instead of exclusively counting how many individual goals each start can
+    ///   reach, now we count how many paths it can go down to reach any goal.
+    /// </summary>
+    /// <returns>The sum of how many paths a start-point can go to reach a '9'</returns>
     public string Part2(string[] input)
     {
-        throw new NotImplementedException();
+        // From a logic standpoint, the only difference is that we no longer ignore
+        // nodes we've already visited.
+        // This is safe, as "paths" can't be cyclic
+        return FindCoordsOfEveryOccurance(input, '0')
+                .Select(s => FindNumPaths(input, s, WeAreCounting.Paths))
+                .Sum()
+                .ToString();
     }
 }
