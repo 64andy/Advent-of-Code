@@ -124,6 +124,7 @@ public class AdventOfCode
         }
 
         string[] solutionInput = GetSolutionInput(solution).ToArray();
+        Console.Write("\n===\n");
         Console.WriteLine("Output for Part 1: " + RunPart(solutionInput, solution, Part.Part1));
         Console.WriteLine("Output for Part 2: " + RunPart(solutionInput, solution, Part.Part2));
     }
