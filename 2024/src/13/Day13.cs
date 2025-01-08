@@ -27,13 +27,13 @@ partial class Day13 : ISolution
     )]
     private static partial Regex MACHINE_INFO_REGEX();
 
-    record Game((int X, int Y) A, (int X, int Y) B, (int X, int Y) Prize);
+    record Game((long X, long Y) A, (long X, long Y) B, (long X, long Y) Prize);
 
     private static IEnumerable<Game> ParseGame(string[] input)
     {
         return MACHINE_INFO_REGEX().Matches(string.Join('\n', input))
                 .Select(m => m.Groups.Values.Skip(1))   // First group is the whole string (we don't want)
-                .Select(m => m.Select(n => int.Parse(n.Value)).ToArray())
+                .Select(m => m.Select(n => long.Parse(n.Value)).ToArray())
                 .Select(n => new Game((n[0], n[1]), (n[2], n[3]), (n[4], n[5])));
 
     }
@@ -43,7 +43,7 @@ partial class Day13 : ISolution
     /// 
     /// </summary>
     /// <returns></returns>
-    private static (int APresses, int BPresses)? TrySolveButtonPresses(Game game)
+    private static (long APresses, long BPresses)? TrySolveButtonPresses(Game game)
     {
         /*
         I've forgotten my simultaneous equations so:
@@ -74,16 +74,16 @@ partial class Day13 : ISolution
         * a = 4
         */
         // PART 1: Eliminate A to get B
-        int A_lhs = game.A.X * game.B.Y - game.A.Y * game.B.X;
-        int A_rhs = game.Prize.X * game.B.Y - game.Prize.Y * game.B.X;
+        long A_lhs = game.A.X * game.B.Y - game.A.Y * game.B.X;
+        long A_rhs = game.Prize.X * game.B.Y - game.Prize.Y * game.B.X;
         // Our number of presses must be a whole number, we can't "half-press" like SM64
         if (A_rhs % A_lhs != 0) return null;
-        int A = A_rhs / A_lhs;
+        long A = A_rhs / A_lhs;
 
         // PART 2: Now B's known, solve for A
-        int B_rhs = game.Prize.X - (A * game.A.X);
+        long B_rhs = game.Prize.X - (A * game.A.X);
         if (B_rhs % game.B.X != 0) return null;
-        int B = B_rhs / game.B.X;
+        long B = B_rhs / game.B.X;
 
         // Final sanity check: We can't have negative button presses
         if (A < 0 || B < 0) return null;
@@ -94,13 +94,18 @@ partial class Day13 : ISolution
     {
         return ParseGame(input)
                 .Select(TrySolveButtonPresses)
-                .OfType<(int APresses, int BPresses)>()
+                .OfType<(long APresses, long BPresses)>()
                 .Select(p => p.APresses * 3 + p.BPresses)
                 .Sum().ToString();
     }
 
     public string Part2(string[] input)
     {
-        throw new NotImplementedException();
+        return ParseGame(input)
+                .Select(g => g with {Prize = (g.Prize.X + 10_000_000_000_000, g.Prize.Y + 10_000_000_000_000)})
+                .Select(TrySolveButtonPresses)
+                .OfType<(long APresses, long BPresses)>()
+                .Select(p => p.APresses * 3 + p.BPresses)
+                .Sum().ToString();
     }
 }
